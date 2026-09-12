@@ -16,10 +16,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     checkAvailableSlots(message.location, message.dateRange)
       .then(result => sendResponse({ success: true, data: result }))
       .catch(error => sendResponse({ success: false, error: error.message }));
-    return true;
+    return true; // Keep the channel open for async response
   }
 
   if (message.action === "playSound") {
+    // Sound will be played from popup script
     sendResponse({ status: "Sound triggered" });
   }
 });
@@ -30,12 +31,12 @@ async function checkAvailableSlots(location, dateRange) {
     // Get the active visa scheduling tab
     const tabs = await chrome.tabs.query({ url: "https://www.usvisascheduling.com/*" });
     if (!tabs.length) {
-      throw new Error("Visa scheduling site not open. Please open https://www.usvisascheduling.com and select a location first");
+      throw new Error("Visa scheduling site not open");
     }
 
     const tab = tabs[0];
     
-    // Inject script to extract REAL slot data from the page
+    // Inject script to extract slot data from the page
     const result = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       world: "MAIN",
@@ -50,24 +51,19 @@ async function checkAvailableSlots(location, dateRange) {
   }
 }
 
-// Function to run in page context - Extract REAL DATA from website
+// Function to run in page context
 function extractSlotData(location, dateRange) {
   const slots = [];
   let totalSlots = 0;
 
   try {
-    console.log("[VISA MONITOR] Extracting REAL slots for:", location);
-
-    // Method 1: Extract from calendar UI (jQuery UI Datepicker)
+    // Method 1: Extract from calendar UI
     const calendarRows = document.querySelectorAll("table.ui-datepicker-calendar tbody tr");
     
     if (calendarRows.length > 0) {
-      console.log("[VISA MONITOR] Found calendar with rows:", calendarRows.length);
-      
       calendarRows.forEach(row => {
         const cells = row.querySelectorAll("td");
         cells.forEach(cell => {
-          // Skip disabled dates
           if (cell.classList.contains("ui-state-disabled")) return;
           if (cell.classList.contains("ui-datepicker-unselectable")) return;
           
@@ -75,8 +71,6 @@ function extractSlotData(location, dateRange) {
           if (link) {
             const day = link.textContent.trim();
             const availText = cell.textContent.trim();
-            
-            // Extract number of available slots
             const availCount = parseInt(availText.replace(/[^0-9]/g, "")) || 0;
             
             if (availCount > 0) {
@@ -85,44 +79,13 @@ function extractSlotData(location, dateRange) {
                 available: availCount
               });
               totalSlots += availCount;
-              console.log("[VISA MONITOR] Found REAL slot - Date:", day, "Available:", availCount);
             }
           }
         });
       });
     }
 
-    // Method 2: Try alternate selectors (in case page structure is different)
-    if (totalSlots === 0) {
-      console.log("[VISA MONITOR] No slots found from primary method, trying alternate...");
-      
-      // Look for any elements with slot count information
-      const allCells = document.querySelectorAll("td a");
-      allCells.forEach(link => {
-        const text = link.textContent.trim();
-        const parent = link.closest("td");
-        
-        if (parent && !parent.classList.contains("ui-state-disabled")) {
-          const content = parent.textContent.trim();
-          const match = content.match(/(\d+)/);
-          
-          if (match) {
-            const day = text;
-            const count = parseInt(match[1]) || 0;
-            
-            if (count > 0 && !slots.find(s => s.date === day)) {
-              slots.push({
-                date: day,
-                available: count
-              });
-              totalSlots += count;
-            }
-          }
-        }
-      });
-    }
-
-    // Get month and year for reference
+    // Method 2: Try to extract month/year context
     const monthEl = document.querySelector(".ui-datepicker-month");
     const yearEl = document.querySelector(".ui-datepicker-year");
     let currentMonth = "";
@@ -131,7 +94,14 @@ function extractSlotData(location, dateRange) {
     if (monthEl) currentMonth = monthEl.textContent.trim() || monthEl.value;
     if (yearEl) currentYear = yearEl.textContent.trim() || yearEl.value;
 
-    console.log("[VISA MONITOR] Final result - Total REAL slots found:", totalSlots);
+    // Method 3: Extract from page text/data if available
+    if (totalSlots === 0) {
+      const pageText = document.body.innerText;
+      const slotsMatch = pageText.match(/(\d+)\s*(?:slot|available|appointment)/i);
+      if (slotsMatch) {
+        totalSlots = parseInt(slotsMatch[1]) || 0;
+      }
+    }
 
   } catch (error) {
     console.warn("[VISA MONITOR] Extraction error:", error);
