@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "Siva Visa Slot Monitor",
+  "version": "1.0.0",
+  "description": "Monitor US visa appointment availability on usvisascheduling.com",
+  
+  "permissions": [
+    "storage",
+    "scripting",
+    "tabs",
+    "alarms",
+    "notifications"
+  ],
+  
+  "host_permissions": [
+    "https://www.usvisascheduling.com/*"
+  ],
+  
+  "action": {
+    "default_title": "Siva Visa Slot Monitor",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon-16.png",
+      "48": "images/icon-48.png",
+      "128": "images/icon-128.png"
+    }
+  },
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["https://www.usvisascheduling.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "icons": {
+    "16": "images/icon-16.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["alert-sound.mp3"],
+      "matches": ["https://www.usvisascheduling.com/*"]
+    }
+  ]
+}

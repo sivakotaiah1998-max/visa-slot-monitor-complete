@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US Visa Slot Monitor</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🛂 Visa Slot Monitor</h1>
+      <p class="subtitle">Monitor US Visa Appointment Availability</p>
+    </header>
+
+    <div class="settings-section">
+      <label for="locationSelect">Primary Location (Optional):</label>
+      <select id="locationSelect">
+        <option value="">-- Any Location --</option>
+        <option value="HYDERABAD">Hyderabad</option>
+        <option value="CHENNAI">Chennai</option>
+        <option value="KOLKATA">Kolkata</option>
+        <option value="MUMBAI">Mumbai</option>
+        <option value="DELHI">Delhi</option>
+      </select>
+      <p class="info-text">Leave blank to monitor ALL locations</p>
+    </div>
+
+    <div class="settings-section">
+      <label>Monitor All Locations:</label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="monitorAll" checked>
+        Alert me for slots at ANY location
+      </label>
+    </div>
+
+    <div class="settings-section">
+      <label for="visaType">Visa Type:</label>
+      <select id="visaType">
+        <option value="">-- Choose Type --</option>
+        <option value="b1b2">B1/B2 (Tourist/Business)</option>
+        <option value="f1">F1 (Student)</option>
+        <option value="h1b">H1B (Work)</option>
+        <option value="l1">L1 (Intra-company)</option>
+        <option value="o1">O1 (Exceptional Ability)</option>
+      </select>
+    </div>
+
+    <div class="settings-section">
+      <label for="dateRange">Date Range Preference:</label>
+      <input type="date" id="startDate" placeholder="Start Date">
+      <input type="date" id="endDate" placeholder="End Date">
+    </div>
+
+    <div class="settings-section">
+      <label>
+        <input type="checkbox" id="enableSound" checked>
+        Enable Sound Alert
+      </label>
+      <label>
+        <input type="checkbox" id="enableNotification" checked>
+        Enable Desktop Notification
+      </label>
+    </div>
+
+    <button id="checkButton" class="btn-primary">🔍 Check Available Slots (All Locations)</button>
+
+    <div id="results" class="results-section" style="display: none;">
+      <h3>✅ Available Slots Found!</h3>
+      <div id="slotInfo" class="slot-info">
+        <!-- Results will appear here -->
+      </div>
+    </div>
+
+    <div id="multiLocationResults" class="multi-location-results" style="display: none;">
+      <h3>📍 Slots by Location</h3>
+      <div id="locationSlotsContainer">
+        <!-- Location results will appear here -->
+      </div>
+    </div>
+
+    <div id="noResults" class="no-results" style="display: none;">
+      <p>❌ No slots available for selected date range</p>
+    </div>
+
+    <div id="error" class="error-message" style="display: none;">
+      <!-- Error messages will appear here -->
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      <p>Checking all locations...</p>
+    </div>
+
+    <footer>
+      <p class="last-checked">Last checked: <span id="lastChecked">Never</span></p>
+      <p class="info">💡 Manually refresh to check slots. Alerts for ALL locations!</p>
+    </footer>
+  </div>
+
+  <audio id="alertSound" preload="auto">
+    <source src="alert-sound.mp3" type="audio/mpeg">
+  </audio>
+
+  <script src="popup.js"></script>
+</body>
+</html>
